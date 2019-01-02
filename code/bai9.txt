@@ -1,0 +1,95 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <vector>
+
+using namespace std;
+
+#define MAXN 100000
+#define MAXQ 100000
+
+int a[MAXN],b[MAXN],pos[MAXN];
+long long pref[4 * MAXN],suff[4 * MAXN],sum[4 * MAXN],best[4 * MAXN];
+long long best_suff;
+
+long long query(int node, int l, int r, int x, int y){
+    if(r < x || l > y) return 0;
+    
+    if(x <= l && r <= y){
+        long long ret = max(best[node],best_suff + pref[node]);
+        best_suff = max(suff[node],best_suff + sum[node]);
+        return ret;
+    }else{
+        int mi = (l + r) >> 1;
+        long long ret1 = query(2 * node + 1,l,mi,x,y);
+        long long ret2 = query(2 * node + 2,mi + 1,r,x,y);
+        return max(ret1,ret2);
+    }
+}
+
+void update(int node, int l, int r, int x, int val){
+    if(r < x || l > x) return;
+    
+    if(l == r){
+        pref[node] = suff[node] = best[node] = max(0,val);
+        sum[node] = val;
+    }else{
+        int mi = (l + r) >> 1;
+        
+        update(2 * node + 1,l,mi,x,val);
+        update(2 * node + 2,mi + 1,r,x,val);
+        
+        pref[node] = max(pref[2 * node + 1],sum[2 * node + 1] + pref[2 * node + 2]);
+        suff[node] = max(suff[2 * node + 2],sum[2 * node + 2] + suff[2 * node + 1]);
+        sum[node] = sum[2 * node + 1] + sum[2 * node + 2];
+        best[node] = max(suff[2 * node + 1] + pref[2 * node + 2],max(best[2 * node + 1],best[2 * node + 2]));
+    }
+}
+
+vector<int> q[MAXN],id[MAXN];
+long long ans[MAXQ];
+
+int main(){
+    int N;
+    scanf("%d",&N);
+    
+    for(int i = 0;i < N;++i){
+        scanf("%d",&a[i]);
+        b[i] = a[i];
+    }
+    
+    sort(b,b + N);
+    int m = unique(b,b + N) - b;
+    memset(pos,-1,sizeof pos);
+    
+    
+    int Q;
+    scanf("%d",&Q);
+    
+    for(int i = 0,l,r;i < Q;++i){
+        scanf("%d %d",&l,&r);
+        q[r - 1].push_back(l - 1);
+        id[r - 1].push_back(i);
+    }
+    
+    for(int i = 0;i < N;++i){
+        update(0,0,N - 1,i,a[i]);
+        
+        int ind = lower_bound(b,b + m,a[i]) - b;
+        
+        if(pos[ind] != -1)
+            update(0,0,N - 1,pos[ind],0);
+        
+        pos[ind] = i;
+        
+        for(int j = q[i].size() - 1;j >= 0;--j){
+            best_suff = 0;
+            ans[ id[i][j] ] = query(0,0,N - 1,q[i][j],i);
+        }
+    }
+    
+    for(int i = 0;i < Q;++i)
+        printf("%lld\n",ans[i]);
+    
+    return 0;
+}

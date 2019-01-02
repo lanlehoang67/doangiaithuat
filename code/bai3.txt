@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+#define left first.first
+#define right first.second
+#define sum second.first
+#define ans second.second
+#define maxn 50001
+#define oo 1000000001
+using namespace std;
+ 
+long long n,a[maxn],m;
+typedef pair < long long , long long > II;
+typedef pair < II , II > IIII;
+IIII it[4*maxn];
+void doc()
+{
+    cin>>n;
+    for(int i=1;i<=n;i++) cin>>a[i];
+}
+void khoitao(int r,int k,int l)
+{
+    if(k==l)
+    {
+        it[r]=IIII(II(a[k],a[k]),II(a[k],a[k]));
+        return;
+    }
+    int g=(k+l)/2;
+    khoitao(2*r,k,g);
+    khoitao(2*r+1,g+1,l);
+    it[r].sum=it[2*r].sum+it[2*r+1].sum;
+    it[r].left=max(it[2*r].left,it[2*r].sum+it[2*r+1].left);
+    it[r].right=max(it[2*r+1].right,it[2*r+1].sum+it[2*r].right);
+    it[r].ans=max(max(it[2*r].ans,it[2*r+1].ans),it[2*r].right+it[2*r+1].left);
+}
+IIII get(int r,int k,int l,int u,int v)
+{
+    if(v<k||l<u) return IIII(II(0,-oo),II(-oo,-oo));
+    if(u<=k&&l<=v) return it[r];
+    int g=(k+l)/2;
+    IIII t1=get(2*r,k,g,u,v);
+    IIII t2=get(2*r+1,g+1,l,u,v);
+    long long left1=max(t1.left,t1.sum+t2.left);
+    long long right1=max(t2.right,t2.sum+t1.right);
+    long long ans1=max(max(t1.ans,t2.ans),t1.right+t2.left);
+    long long sum1=t1.sum+t2.sum;
+    return IIII(II(left1,right1),II(sum1,ans1));
+}
+void tinh()
+{
+    khoitao(1,1,n);
+    int m;
+    cin>>m;
+    while(m--)
+    {
+        int u,v;
+        cin>>u>>v;
+        cout<<get(1,1,n,u,v).ans<<endl;
+    }
+}
+int main()
+{
+    freopen("GSS.inp","r",stdin);
+    freopen("GSS.out","w",stdout);
+    ios::sync_with_stdio(false);
+    cin.tie(NULL);
+    cout.tie(NULL);
+    doc();
+    tinh();
+}
